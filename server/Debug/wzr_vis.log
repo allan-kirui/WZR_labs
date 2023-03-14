@@ -1,0 +1,22 @@
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  main.cpp
+D:\Education\Sem 6\WZR\labs\server\main.cpp(24,11): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(149,39): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Education\Sem 6\WZR\labs\server\main.cpp(151,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(388,50): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Education\Sem 6\WZR\labs\server\main.cpp(451,63): warning C4305: '/=': truncation from 'double' to 'float'
+D:\Education\Sem 6\WZR\labs\server\main.cpp(458,61): warning C4305: '*=': truncation from 'double' to 'float'
+D:\Education\Sem 6\WZR\labs\server\main.cpp(484,37): warning C4305: '+=': truncation from 'double' to 'float'
+D:\Education\Sem 6\WZR\labs\server\main.cpp(489,37): warning C4305: '-=': truncation from 'double' to 'float'
+D:\Education\Sem 6\WZR\labs\server\main.cpp(510,23): warning C4305: '/=': truncation from 'double' to 'float'
+D:\Education\Sem 6\WZR\labs\server\main.cpp(518,23): warning C4305: '*=': truncation from 'double' to 'float'
+D:\Education\Sem 6\WZR\labs\server\main.cpp(529,4): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(530,4): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(531,4): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(535,5): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(536,5): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(537,5): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(543,6): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\Education\Sem 6\WZR\labs\server\main.cpp(611): warning C4715: 'WndProc': not all control paths return a value
+graphics.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+  wzr_vis.vcxproj -> D:\Education\Sem 6\WZR\labs\server\Debug\wzr_vis.exe

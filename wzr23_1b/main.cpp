@@ -10,6 +10,7 @@
 #include <gl\glu.h>
 #include <iterator> 
 #include <map>
+#include <string.h>
 
 #include "objects.h"
 #include "graphics.h"
@@ -28,8 +29,11 @@ float avg_cycle_time;                // sredni czas pomiedzy dwoma kolejnymi cyk
 long time_of_cycle, number_of_cyc;   // zmienne pomocnicze potrzebne do obliczania avg_cycle_time
 long time_start = clock();
 
-multicast_net *multi_reciv;          // wsk do obiektu zajmujacego sie odbiorem komunikatow
-multicast_net *multi_send;           //   -||-  wysylaniem komunikatow
+//multicast_net *multi_reciv;          // wsk do obiektu zajmujacego sie odbiorem komunikatow
+//multicast_net *multi_send;           //   -||-  wysylaniem komunikatow
+unicast_net* uni_reciv;
+unicast_net* uni_send;
+char server_ip[16] = "192.168.1.100";
 
 HANDLE threadReciv;                  // uchwyt w¹tku odbioru komunikatów
 HWND main_window;                    // uchwyt do g³ównego okna programu 
@@ -68,7 +72,7 @@ DWORD WINAPI ReceiveThreadFun(void *ptr)
 		int frame_size = pmt_net->reciv((char*)&frame, sizeof(Frame));   // oczekiwanie na nadejœcie ramki 
 		ObjectState state = frame.state;
 
-		//fprintf(f, "odebrano stan iID = %d, ID dla mojego obiektu = %d\n", frame.iID, my_car->iID);
+		fprintf(f, "odebrano stan iID = %d, ID dla mojego obiektu = %d\n", frame.iID, my_car->iID);
 
 		// Lock the Critical section
 		EnterCriticalSection(&m_cs);               // wejœcie na œcie¿kê krytyczn¹ - by inne w¹tki (np. g³ówny) nie wspó³dzieli³ 
@@ -105,8 +109,10 @@ void InteractionInitialisation()
 	time_of_cycle = clock();             // pomiar aktualnego czasu
 
 	// obiekty sieciowe typu multicast (z podaniem adresu WZR oraz numeru portu)
-	multi_reciv = new multicast_net("224.12.12.101", 10001);      // obiekt do odbioru ramek sieciowych
-	multi_send = new multicast_net("224.12.12.101", 10001);       // obiekt do wysy³ania ramek
+	//multi_reciv = new multicast_net("224.12.12.101", 10001);      // obiekt do odbioru ramek sieciowych
+	//multi_send = new multicast_net("224.12.12.101", 10001);       // obiekt do wysy³ania ramek
+	uni_reciv = new unicast_net(1001);
+	uni_send = new unicast_net(1002);
 
 
 	// uruchomienie w¹tku obs³uguj¹cego odbiór komunikatów:
@@ -114,7 +120,7 @@ void InteractionInitialisation()
 		NULL,                        // no security attributes
 		0,                           // use default stack size
 		ReceiveThreadFun,                // thread function
-		(void *)multi_reciv,               // argument to thread function
+		(void *)uni_reciv,               // argument to thread function
 		NULL,                        // use default creation flags
 		&dwThreadId);                // returns the thread identifier
 	SetThreadPriority(threadReciv, THREAD_PRIORITY_HIGHEST);
@@ -149,7 +155,8 @@ void VirtualWorldCycle()
 	frame.state = my_car->State();               // state w³asnego obiektu 
 	frame.iID = my_car->iID;
 
-	multi_send->send((char*)&frame, sizeof(Frame));  // wys³anie komunikatu do pozosta³ych aplikacji
+	//multi_send->send((char*)&frame, sizeof(Frame));  // wys³anie komunikatu do pozosta³ych aplikacji
+	uni_send->send((char*)&frame, server_ip, sizeof(Frame));
 }
 
 // *****************************************************************
