@@ -30,7 +30,7 @@ HANDLE threadSend;
 void DieWithError(char *errorMessage)
 {
 	perror(errorMessage);
-	 //exit(1);
+	//exit(1);
 }
 
 
@@ -60,7 +60,7 @@ multicast_net::~multicast_net()
 {
 	//close(sock);
 #ifdef WIN32
-	WSACleanup(); // ***** For Windows
+	WSACleanup(); // ********************* For Windows
 #endif
 
 }
@@ -148,8 +148,6 @@ int multicast_net::reciv(char* buffer, int maxsize)
 	return recvLen;
 
 }
-
-
 // #########################################
 // ##############   UNICAST  ###############
 // #########################################

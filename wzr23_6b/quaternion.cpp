@@ -1,7 +1,7 @@
 /************************************************************************************************** 
     Obs³uga kwaternionów 
    
-    Aby zrealizowaæ obrót nale¿y pomno¿yæ kwaternion orientacji przez kwaterion obrotu
+    Aby zrealizowaæ obrót nale¿y pomno¿yæ quaternion orientacji przez kwaterion obrotu
     z lewej strony:
             
     qOrient = qRot*qOrient
@@ -10,14 +10,14 @@
     
     Kwaternion mo¿e tez reprezentowaæ orientacjê obiektu, jeœli za³o¿ymy jak¹œ orientacjê
     pocz¹tkow¹ np. obiekt skierowany w kierunku osi 0x, z normaln¹ zgodn¹ z 0y. Wówczas 
-    kwaternion odpowiada obrotowi od po³o¿enia poc¿¹tkowego. 
+    quaternion odpowiada obrotowi od po³o¿enia poc¿¹tkowego. 
 ****************************************************************************************************/
 #include <stdlib.h>
 //#include "vector3D.h"
 #include "quaternion.h"
 
 
-kwaternion::kwaternion(float x,float y,float z,float w)
+quaternion::quaternion(float x,float y,float z,float w)
 
 {
 	this->x=x;
@@ -27,7 +27,7 @@ kwaternion::kwaternion(float x,float y,float z,float w)
 }
 
 
-kwaternion::kwaternion()
+quaternion::quaternion()
 {
 	x=0;
 	y=0;
@@ -36,7 +36,7 @@ kwaternion::kwaternion()
 }
 
 // mno¿enie dwóch kwaternionów
-kwaternion kwaternion::operator*(kwaternion q)
+quaternion quaternion::operator*(quaternion q)
 {
     double rx, ry, rz, rw;		// temp result	
 
@@ -48,30 +48,30 @@ kwaternion kwaternion::operator*(kwaternion q)
 	
 	rw	= w*q.w - x*q.x - y*q.y - z*q.z;
 
-	return kwaternion((float)rx,(float)ry,(float)rz,(float)rw);
+	return quaternion((float)rx,(float)ry,(float)rz,(float)rw);
 }
 
 // zamiana kwaterniona na reprezentacjê k¹towo-osiow¹
-// dla wygody oœ i k¹t obrotu umieszczane s¹ w strukturze typu kwaternion 
-kwaternion kwaternion::AsixAngle()
+// dla wygody oœ i k¹t obrotu umieszczane s¹ w strukturze typu quaternion 
+quaternion quaternion::AsixAngle()
 {
-    Wektor3 v(x,y,z);
+    Vector3 v(x,y,z);
 
-    if (v.dlugosc()==0) return kwaternion(0,0,0,1);
+    if (v.length()==0) return quaternion(0,0,0,1);
     else 
     {
         v=v.znorm();
 		    float kat_obrotu = (w <= -1 ? 0 : (w >= 1 ? 0 : 2.0*acos(w)));
-        return kwaternion(v.x,v.y,v.z,kat_obrotu);
+        return quaternion(v.x,v.y,v.z,kat_obrotu);
     }
 }
 
-kwaternion kwaternion::operator~ ()
+quaternion quaternion::operator~ ()
 {
-    return kwaternion(-x,-y,-z,w);
+    return quaternion(-x,-y,-z,w);
 }
   
-kwaternion kwaternion:: operator+= (kwaternion q)	// operator+= is used to add another Vector3D to this Vector3D.
+quaternion quaternion:: operator+= (quaternion q)	// operator+= is used to add another Vector3D to this Vector3D.
 {
 	x += q.x;
 	y += q.y;
@@ -80,38 +80,38 @@ kwaternion kwaternion:: operator+= (kwaternion q)	// operator+= is used to add a
     return *this;
 }
 
-kwaternion kwaternion:: operator+ (kwaternion q)	// operator+= is used to add another Vector3D to this Vector3D.
+quaternion quaternion:: operator+ (quaternion q)	// operator+= is used to add another Vector3D to this Vector3D.
 {
-        return kwaternion(x+q.x,y+q.y,z+q.z,w+q.w);
+        return quaternion(x+q.x,y+q.y,z+q.z,w+q.w);
 }
   
-kwaternion kwaternion:: operator- (kwaternion q)	// operator+= is used to add another Vector3D to this Vector3D.
+quaternion quaternion:: operator- (quaternion q)	// operator+= is used to add another Vector3D to this Vector3D.
 {
-        return kwaternion(x-q.x,y-q.y,z-q.z,w-q.w);
+        return quaternion(x-q.x,y-q.y,z-q.z,w-q.w);
 }  
   
-kwaternion kwaternion::n() // licz normalna z obecnego wektora
+quaternion quaternion::n() // licz normal_vector z obecnego wektora
 {
 float length;
 
 	length=sqrt(x*x+y*y+z*z+w*w);
-	if (length==0) return kwaternion(0,0,0,0);
-	    else return kwaternion(x/length,y/length,z/length,w/length);
+	if (length==0) return quaternion(0,0,0,0);
+	    else return quaternion(x/length,y/length,z/length,w/length);
 }
 
-float kwaternion::l() // d³ugoœæ 
+float quaternion::l() // d³ugoœæ 
 {
   return sqrt(x*x+y*y+z*z+w*w);
 }	
 
-kwaternion kwaternion::operator* (float value)  // mnozenie razy skalar
+quaternion quaternion::operator* (float value)  // mnozenie razy skalar
 {
-	return kwaternion(x*value,y*value,z*value,w*value);
+	return quaternion(x*value,y*value,z*value,w*value);
 }
 
-kwaternion kwaternion::operator/ (float value)  // dzielenie przez skalar
+quaternion quaternion::operator/ (float value)  // dzielenie przez skalar
 {
-	return kwaternion(x/value,y/value,z/value,w/value);
+	return quaternion(x/value,y/value,z/value,w/value);
 }
 	
 
@@ -122,25 +122,25 @@ M =  [ w^2 + x^2 - y^2 - z^2       2xy - 2wz                   2xz + 2wy
        2xy + 2wz                   w^2 - x^2 + y^2 - z^2       2yz - 2wx
        2xz - 2wy                   2yz + 2wx                   w^2 - x^2 - y^2 + z^2 ]
 */
-Wektor3 kwaternion::obroc_wektor(Wektor3 V)       
+Vector3 quaternion::rotate_vector(Vector3 V)       
 { 
-    Wektor3 Vo;
+    Vector3 Vo;
 
-    kwaternion p = kwaternion(V.x,V.y,V.z,0);
-    kwaternion q = kwaternion(x,y,z,w);
-    kwaternion pp = q*p*~q;
+    quaternion p = quaternion(V.x,V.y,V.z,0);
+    quaternion q = quaternion(x,y,z,w);
+    quaternion pp = q*p*~q;
     Vo.x = pp.x;Vo.y = pp.y; Vo.z = pp.z;
 
     return Vo;    
 }
 
 // zamiana obrotu wyra¿onego reprezentacj¹ k¹towo-osiow¹ na reprezentacjê kwaternionow¹  
-kwaternion AsixToQuat(Wektor3 v, float angle)
+quaternion AsixToQuat(Vector3 v, float angle)
 {
     float x,y,z,w;			// temp vars of vector
     double rad, scale;		// temp vars
 
-	if (v.dlugosc()==0) return kwaternion();
+	if (v.length()==0) return quaternion();
 	
 	v = v.znorm();
 	rad = angle;
@@ -153,5 +153,5 @@ kwaternion AsixToQuat(Wektor3 v, float angle)
 	y = float(v.y * scale);
 	z = float(v.z * scale);
 
-	return kwaternion(x,y,z,w);
+	return quaternion(x,y,z,w);
 }

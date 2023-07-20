@@ -93,6 +93,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="agents.cpp" />
     <ClCompile Include="graphics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="net.cpp" />
@@ -101,6 +102,7 @@
     <ClCompile Include="vector3D.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="agents.h" />
     <ClInclude Include="graphics.h" />
     <ClInclude Include="net.h" />
     <ClInclude Include="objects.h" />

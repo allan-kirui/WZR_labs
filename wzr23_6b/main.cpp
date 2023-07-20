@@ -71,6 +71,7 @@ float auctionNextBid = 0;
 int auctionCurrentBidID = 0;
 
 
+
 int myRequestedID = 0;
 int prepRequestedID = 0;
 transfer_types myRequestedTransferType = MONEY;
@@ -113,6 +114,40 @@ void NegotiationSending(int ID_receiver, int transfer_type)
 	multi_send->send((char*)&frame, sizeof(Frame));
 }
 
+
+void AuctionSendState() {
+	Frame frame;
+	frame.frame_type = AUCTION;
+	frame.auctionType = STATE;
+	frame.iID = my_vehicle->iID;
+	frame.auctionCurrentBid = auctionCurrentBid;
+	frame.auctionNextBid = auctionNextBid;
+	frame.iID_receiver = auctionCurrentBidID;
+	frame.auctionTimeLeft = auctionTimeLeft;
+
+	multi_send->send((char*)&frame, sizeof(Frame));
+}
+void AuctionSendStop() {
+	Frame frame;
+	frame.frame_type = AUCTION;
+	frame.auctionType = STOP;
+	frame.iID = my_vehicle->iID;
+	frame.auctionCurrentBid = auctionCurrentBid;
+	frame.iID_receiver = auctionCurrentBidID;
+
+	multi_send->send((char*)&frame, sizeof(Frame));
+}
+void AuctionSendBid() {
+	Frame frame;
+	frame.frame_type = AUCTION;
+	frame.auctionType = BID;
+	frame.iID = my_vehicle->iID;
+	frame.auctionCurrentBid = auctionCurrentBid;
+	frame.auctionNextBid = auctionNextBid;
+	frame.iID_receiver = auctionHostID;
+
+	multi_send->send((char*)&frame, sizeof(Frame));
+}
 //******************************************
 // Funkcja obs³ugi w¹tku odbioru komunikatów 
 DWORD WINAPI ReceiveThreadFunction(void *ptr)
@@ -525,39 +560,7 @@ float TransferSending(int ID_receiver, int transfer_type, float transfer_value)
 	return frame.transfer_value;
 }
 
-void AuctionSendState() {
-	Frame frame;
-	frame.frame_type = AUCTION;
-	frame.auctionType = STATE;
-	frame.iID = my_vehicle->iID;
-	frame.auctionCurrentBid = auctionCurrentBid;
-	frame.auctionNextBid = auctionNextBid;
-	frame.iID_receiver = auctionCurrentBidID;
-	frame.auctionTimeLeft = auctionTimeLeft;
 
-	multi_send->send((char*)&frame, sizeof(Frame));
-}
-void AuctionSendStop() {
-	Frame frame;
-	frame.frame_type = AUCTION;
-	frame.auctionType = STOP;
-	frame.iID = my_vehicle->iID;
-	frame.auctionCurrentBid = auctionCurrentBid;
-	frame.iID_receiver = auctionCurrentBidID;
-
-	multi_send->send((char*)&frame, sizeof(Frame));
-}
-void AuctionSendBid() {
-	Frame frame;
-	frame.frame_type = AUCTION;
-	frame.auctionType = BID;
-	frame.iID = my_vehicle->iID;
-	frame.auctionCurrentBid = auctionCurrentBid;
-	frame.auctionNextBid = auctionNextBid;
-	frame.iID_receiver = auctionHostID;
-
-	multi_send->send((char*)&frame, sizeof(Frame));
-}
 
 
 
