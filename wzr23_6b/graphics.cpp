@@ -23,36 +23,36 @@ extern map<int, MovableObject*> network_vehicles;
 extern CRITICAL_SECTION m_cs;
 extern Terrain terrain;
 
-extern long czas_istnienia_grupy;
-extern long czas_start;
+extern long group_existing_time;
+extern long start_time;
 
 int g_GLPixelIndex = 0;
 HGLRC g_hGLContext = NULL;
 unsigned int font_base;
 
-ParametryWidoku par_wid;
+ViewParameters par_view;
 
-extern void TworzListyWyswietlania();		// definiujemy listy tworzące labirynt
-extern void RysujGlobalnyUkladWsp();
+extern void CreateDisplayLists();		// definiujemy listy tworzące labirynt
+extern void DrawGlobalCoordinateSystem();
 
-void UstawienieStandardowychParWidoku(ParametryWidoku *p)
+void StandardViewParametersSetting(ViewParameters *p)
 {
-	p->pocz_kierunek_kamery = Wektor3(0, -3, -11);   // kierunek patrzenia
-	p->pocz_pol_kamery = Wektor3(30, 3, 0);          // po³o¿enie kamery
-	p->pocz_pion_kamery = Wektor3(0, 1, 0);           // kierunek pionu kamery             
+	p->initial_camera_direction = Vector3(0, -3, -11);   // direction patrzenia
+	p->initial_camera_position = Vector3(30, 3, 0);          // po³o¿enie kamery
+	p->initial_camera_vertical = Vector3(0, 1, 0);           // direction pionu kamery             
 
 	// Zmienne - ustawiane przez użytkownika
-	p->sledzenie = 1;                             // tryb œledzenia obiektu przez kamerê
-	p->widok_z_gory = 0;                          // tryb widoku z gory
-	p->oddalenie = 10.0;                          // oddalenie lub przybli¿enie kamery
+	p->tracking = 1;                             // tryb œledzenia obiektu przez kamerê
+	p->top_view = 0;                          // tryb widoku z gory
+	p->distance = 10.0;                          // distance lub przybli¿enie kamery
 	p->zoom = 1.0;                               // zmiana kąta widzenia
-	p->kat_kam_z = 0;                            // obrót kamery góra-dół
+	p->cam_angle_z = 0;                            // obrót kamery góra-dół
 
-	p->przes_w_prawo = 0;                        // przesunięcie kamery w prawo (w lewo o wart. ujemnej) - chodzi głównie o tryb edycji
-	p->przes_w_dol = 0;                          // przesunięcie do dołu (w górę o wart. ujemnej)          i widok z góry (klawisz Q)  
+	p->shift_to_right = 0;                        // przesunięcie kamery w prawo (w lewo o wart. ujemnej) - chodzi głównie o tryb edycji
+	p->shift_to_bottom = 0;                          // przesunięcie do dołu (w górę o wart. ujemnej)          i widok z góry (klawisz Q)  
 }
 
-int InicjujGrafike(HDC g_context)
+int GraphicsInitialization(HDC g_context)
 {
 
 	if (SetWindowPixelFormat(g_context) == FALSE)
@@ -65,61 +65,61 @@ int InicjujGrafike(HDC g_context)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	UstawienieStandardowychParWidoku(&par_wid);
+	StandardViewParametersSetting(&par_view);
 
-	TworzListyWyswietlania();		// definiujemy listy tworzące różne elementy sceny
-	terrain.PoczatekGrafiki();
+	CreateDisplayLists();		// definiujemy listy tworzące różne elementy sceny
+	terrain.GraphicsInitialization();
 }
 
 // Ustwienia kamery w zależności od wartości początkowych (w interakcji), wartości ustawianych
 // przez użytkowika oraz stanu obiektu (np. gdy tryb śledzenia)
-void UstawieniaKamery(Wektor3 *polozenie, Wektor3 *kierunek, Wektor3 *pion, ParametryWidoku pw)
+void CameraSettings(Vector3 *position, Vector3 *direction, Vector3 *vertical, ViewParameters pw)
 {
-	if (pw.sledzenie)  // kamera ruchoma - porusza się wraz z obiektem
+	if (pw.tracking)  // kamera ruchoma - porusza się wraz z obiektem
 	{
-		(*kierunek) = my_vehicle->qOrient.obroc_wektor(Wektor3(1, 0, 0));
-		(*pion) = my_vehicle->qOrient.obroc_wektor(Wektor3(0, 1, 0));
-		Wektor3 prawo_kamery = my_vehicle->qOrient.obroc_wektor(Wektor3(0, 0, 1));
+		(*direction) = my_vehicle->state.qOrient.rotate_vector(Vector3(1, 0, 0));
+		(*vertical) = my_vehicle->state.qOrient.rotate_vector(Vector3(0, 1, 0));
+		Vector3 prawo_kamery = my_vehicle->state.qOrient.rotate_vector(Vector3(0, 0, 1));
 
-		(*pion) = (*pion).obrot(pw.kat_kam_z, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
-		(*kierunek) = (*kierunek).obrot(pw.kat_kam_z, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
-		(*polozenie) = my_vehicle->wPol - (*kierunek)*my_vehicle->dlugosc * 0 +
-			(*pion).znorm()*my_vehicle->wysokosc * 5;
-		if (pw.widok_z_gory)
+		(*vertical) = (*vertical).rotation(pw.cam_angle_z, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
+		(*direction) = (*direction).rotation(pw.cam_angle_z, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
+		(*position) = my_vehicle->state.vPos - (*direction)*my_vehicle->length * 0 +
+			(*vertical).znorm()*my_vehicle->height * 5;
+		if (pw.top_view)
 		{
-			(*pion) = (*kierunek);
-			(*kierunek) = Wektor3(0, -1, 0);
-			(*polozenie) = (*polozenie) + Wektor3(0, 100, 0) + (*pion)*pw.przes_w_dol + (*pion)*(*kierunek)*pw.przes_w_prawo;
+			(*vertical) = (*direction);
+			(*direction) = Vector3(0, -1, 0);
+			(*position) = (*position) + Vector3(0, 100, 0) + (*vertical)*pw.shift_to_bottom + (*vertical)*(*direction)*pw.shift_to_right;
 		}
 	}
 	else // bez śledzenia - kamera nie podąża wraz z pojazdem
 	{
-		(*pion) = pw.pocz_pion_kamery;
-		(*kierunek) = pw.pocz_kierunek_kamery;
-		(*polozenie) = pw.pocz_pol_kamery;
-		Wektor3 prawo_kamery = ((*kierunek)*(*pion)).znorm();
-		(*pion) = (*pion).obrot(pw.kat_kam_z / 20, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
-		(*kierunek) = (*kierunek).obrot(pw.kat_kam_z / 20, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
-		if (pw.widok_z_gory)
+		(*vertical) = pw.initial_camera_vertical;
+		(*direction) = pw.initial_camera_direction;
+		(*position) = pw.initial_camera_position;
+		Vector3 prawo_kamery = ((*direction)*(*vertical)).znorm();
+		(*vertical) = (*vertical).rotation(pw.cam_angle_z / 20, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
+		(*direction) = (*direction).rotation(pw.cam_angle_z / 20, prawo_kamery.x, prawo_kamery.y, prawo_kamery.z);
+		if (pw.top_view)
 		{
-			(*pion) = Wektor3(0, 0, -1);
-			(*kierunek) = Wektor3(0, -1, 0.02);
-			(*polozenie) = pw.pocz_pol_kamery + Wektor3(0, 100, 0) + (*pion)*pw.przes_w_dol + (*pion)*(*kierunek)*pw.przes_w_prawo;
+			(*vertical) = Vector3(0, 0, -1);
+			(*direction) = Vector3(0, -1, 0.02);
+			(*position) = pw.initial_camera_position + Vector3(0, 100, 0) + (*vertical)*pw.shift_to_bottom + (*vertical)*(*direction)*pw.shift_to_right;
 		}
 	}
 }
 
 
-void RysujScene()
+void DrawScene()
 {
-	float czas = (float)(czas_istnienia_grupy + clock() - czas_start) / CLOCKS_PER_SEC;  // czas od uruchomienia w [s]
+	float czas = (float)(group_existing_time + clock() - start_time) / CLOCKS_PER_SEC;  // czas od uruchomienia w [s]
 	GLfloat OwnObjectColor[] = { 0.0f, 0.0f, 0.9f, 0.7f };
 	GLfloat BlueSurfaceTr[] = { 0.6f, 0.0f, 0.9f, 0.3f };
 
-	GLfloat NetworkVehiclesColor[] = { 0.2f, 0.8f, 0.4f, 0.4f };
+	GLfloat NetworkVehiclesColor[] = { 0.4f, 0.6f, 0.4f, 0.6f };
 	GLfloat RedSurface[] = { 0.8f, 0.2f, 0.1f, 0.5f };
 	GLfloat OrangeSurface[] = { 1.0f, 0.8f, 0.0f, 0.7f };
-	GLfloat GreenSurface[] = { 0.35f, 0.62f, 0.3f, 1.0f };
+	GLfloat GreenSurface[] = { 0.45f, 0.62f, 0.1f, 1.0f };
 	GLfloat YellowSurface[] = { 0.75f, 0.75f, 0.0f, 1.0f };
 	GLfloat YellowLight[] = { 2.0f, 2.0f, 1.0f, 1.0f };
 
@@ -142,33 +142,32 @@ void RysujScene()
 
 
 	glLoadIdentity();
-	glClearColor(0.3, 0.2, 0.7, 0.6);   // ustawienie nieczarnego koloru tła
+	glClearColor(0.1, 0.4, 0.75, 0.8);   // ustawienie nieczarnego koloru tła
 	glTranslatef(-24, 24, -40);
 	glRasterPos2f(4.0, -4.0);
-	glPrint("%s", par_wid.napis1);
-	glPrint("%s", par_wid.napis2);
+	glPrint("%s", par_view.inscription1);
+	glPrint("%s", par_view.inscription2);
 	glLoadIdentity();
 
+	Vector3 pol_k, kierunek_k, pion_k;
 
-	Wektor3 pol_k, kierunek_k, pion_k;
+	CameraSettings(&pol_k, &kierunek_k, &pion_k, par_view);
 
-	UstawieniaKamery(&pol_k, &kierunek_k, &pion_k, par_wid);
-
-	gluLookAt(pol_k.x - par_wid.oddalenie*kierunek_k.x,
-		pol_k.y - par_wid.oddalenie*kierunek_k.y, pol_k.z - par_wid.oddalenie*kierunek_k.z,
+	gluLookAt(pol_k.x - par_view.distance*kierunek_k.x,
+		pol_k.y - par_view.distance*kierunek_k.y, pol_k.z - par_view.distance*kierunek_k.z,
 		pol_k.x + kierunek_k.x, pol_k.y + kierunek_k.y, pol_k.z + kierunek_k.z,
 		pion_k.x, pion_k.y, pion_k.z);
 
 	//glRasterPos2f(0.30,-0.27);
 	//glPrint("MojObiekt->iID = %d",my_vehicle->iID ); 
 
-	RysujGlobalnyUkladWsp();
+	DrawGlobalCoordinateSystem();
 
 	int dw = 0, dk = 0;
-	if (terrain.czy_toroidalnosc)
+	if (terrain.if_toroidal_world)
 	{
-		if (terrain.granica_x > 0) dk = 1;
-		if (terrain.granica_z > 0) dw = 1;
+		if (terrain.border_x > 0) dk = 1;
+		if (terrain.border_z > 0) dw = 1;
 	}
 
 	for (int w = -dw; w < 1 + dw; w++)
@@ -176,12 +175,12 @@ void RysujScene()
 		{
 			glPushMatrix();
 
-			glTranslatef(terrain.granica_x*k, 0, terrain.granica_z*w);
+			glTranslatef(terrain.border_x*k, 0, terrain.border_z*w);
 
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, OwnObjectColor);
 			glEnable(GL_BLEND);
 
-			my_vehicle->Rysuj();
+			my_vehicle->DrawObject();
 
 			// Lock the Critical section
 			EnterCriticalSection(&m_cs);
@@ -190,16 +189,17 @@ void RysujScene()
 				if (it->second)
 				{
 					glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, NetworkVehiclesColor);
-					it->second->Rysuj();
+					it->second->DrawObject();
 				}
 			}
 			//Release the Critical section
 			LeaveCriticalSection(&m_cs);
 			
-			glDisable(GL_BLEND);
+			//glDisable(GL_BLEND);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, GreenSurface);
 			
-			terrain.Rysuj();
+			terrain.DrawObject();
+			glDisable(GL_BLEND);
 			glPopMatrix();
 		}
 
@@ -210,7 +210,7 @@ void RysujScene()
 
 
 
-void ZmianaRozmiaruOkna(int cx, int cy)
+void WindowSizeChange(int cx, int cy)
 {
 	GLsizei width, height;
 	GLdouble aspect;
@@ -227,7 +227,7 @@ void ZmianaRozmiaruOkna(int cx, int cy)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(55 * par_wid.zoom, aspect, 1, 1000000.0);
+	gluPerspective(55 * par_view.zoom, aspect, 1, 1000000.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -240,7 +240,7 @@ void ZmianaRozmiaruOkna(int cx, int cy)
 
 }
 
-Wektor3 WspolrzedneKursora3D(int x, int y) // współrzędne 3D punktu na obrazie 2D
+Vector3 Cursor3dCoordinates(int x, int y) // współrzędne 3D punktu na obrazie 2D
 {
 	//  pobranie macierz modelowania
 	GLdouble model[16];
@@ -258,7 +258,7 @@ Wektor3 WspolrzedneKursora3D(int x, int y) // współrzędne 3D punktu na obrazi
 	GLdouble wsp[3];
 
 	//RECT rc;
-	//GetClientRect (okno, &rc);
+	//GetClientRect (main_window, &rc);
 
 	GLdouble wsp_z;
 
@@ -266,12 +266,12 @@ Wektor3 WspolrzedneKursora3D(int x, int y) // współrzędne 3D punktu na obrazi
 
 	gluUnProject(x, y, wsp_z, model, proj, view, wsp + 0, wsp + 1, wsp + 2);
 	//gluUnProject (x,rc.bottom - y,wsp_z ,model,proj,view,wsp+0,wsp+1,wsp+2);
-	return Wektor3(wsp[0], wsp[1], wsp[2]);
+	return Vector3(wsp[0], wsp[1], wsp[2]);
 }
 
-Wektor3 WspolrzedneKursora3D(int x, int y, float wysokosc) // współrzędne 3D punktu na obrazie 2D
+Vector3 Cursor3dCoordinates(int x, int y, float height) // współrzędne 3D punktu na obrazie 2D
 {
-	glTranslatef(0, wysokosc, 0);
+	glTranslatef(0, height, 0);
 	//  pobranie macierz modelowania
 	GLdouble model[16];
 	glGetDoublev(GL_MODELVIEW_MATRIX, model);
@@ -288,18 +288,18 @@ Wektor3 WspolrzedneKursora3D(int x, int y, float wysokosc) // współrzędne 3D 
 	GLdouble wsp[3];
 
 	//RECT rc;
-	//GetClientRect (okno, &rc);
+	//GetClientRect (main_window, &rc);
 
 	GLdouble wsp_z;
 
 	int wynik = gluProject(0, 0, 0, model, proj, view, wsp + 0, wsp + 1, &wsp_z);
 	gluUnProject(x, y, wsp_z, model, proj, view, wsp + 0, wsp + 1, wsp + 2);
-	glTranslatef(0, -wysokosc, 0);
+	glTranslatef(0, -height, 0);
 	//gluUnProject (x,rc.bottom - y,wsp_z ,model,proj,view,wsp+0,wsp+1,wsp+2);
-	return Wektor3(wsp[0], wsp[1], wsp[2]);
+	return Vector3(wsp[0], wsp[1], wsp[2]);
 }
 
-void WspolrzedneEkranu(float *xx, float *yy, float *zz, Wektor3 Punkt3D) // współrzędne punktu na ekranie na podstawie wsp 3D
+void ScreenCoordinates(float *xx, float *yy, float *zz, Vector3 Point3D) // współrzędne punktu na ekranie na podstawie wsp 3D
 {
 	//  pobranie macierz modelowania
 	GLdouble model[16];
@@ -313,15 +313,15 @@ void WspolrzedneEkranu(float *xx, float *yy, float *zz, Wektor3 Punkt3D) // wsp�
 	// tablice ze odczytanymi współrzędnymi w przestrzeni widoku
 	GLdouble wsp[3], wsp_okn[3];
 	GLdouble liczba;
-	int wynik = gluProject(Punkt3D.x, Punkt3D.y, Punkt3D.z, model, proj, view, wsp_okn + 0, wsp_okn + 1, wsp_okn + 2);
+	int wynik = gluProject(Point3D.x, Point3D.y, Point3D.z, model, proj, view, wsp_okn + 0, wsp_okn + 1, wsp_okn + 2);
 	gluUnProject(wsp_okn[0], wsp_okn[1], wsp_okn[2], model, proj, view, wsp + 0, wsp + 1, wsp + 2);
 	//fprintf(f,"   Wsp. punktu 3D = (%f, %f, %f), wspolrzedne w oknie = (%f, %f, %f), wsp. punktu = (%f, %f, %f)\n",
-	//  Punkt3D.x,Punkt3D.y,Punkt3D.z,  wsp_okn[0],wsp_okn[1],wsp_okn[2],  wsp[0],wsp[1],wsp[2]);
+	//  Point3D.x,Point3D.y,Point3D.z,  wsp_okn[0],wsp_okn[1],wsp_okn[2],  wsp[0],wsp[1],wsp[2]);
 
 	(*xx) = wsp_okn[0]; (*yy) = wsp_okn[1]; (*zz) = wsp_okn[2];
 }
 
-void ZakonczenieGrafiki()
+void EndOfGraphics()
 {
 	if (wglGetCurrentContext() != NULL)
 	{
@@ -409,11 +409,11 @@ GLvoid BuildFont(HDC hDC)								// Build Our Bitmap Font
 
 	font_base = glGenLists(96);								// Storage For 96 Characters
 
-	font = CreateFont(-17,							// Height Of Font
+	font = CreateFont(-19,							// Height Of Font
 		0,								// Width Of Font
 		0,								// Angle Of Escapement
 		0,								// Orientation Angle
-		FW_BOLD,						// Font Weight
+		FW_NORMAL,						// Font Weight
 		FALSE,							// Italic
 		FALSE,							// Underline
 		FALSE,							// Strikeout
@@ -422,7 +422,7 @@ GLvoid BuildFont(HDC hDC)								// Build Our Bitmap Font
 		CLIP_DEFAULT_PRECIS,			// Clipping Precision
 		ANTIALIASED_QUALITY,			// Output Quality
 		FF_DONTCARE | DEFAULT_PITCH,		// Family And Pitch
-		"Arial");					// Font Name
+		"Times New Roman");					// Font Name
 
 	oldfont = (HFONT)SelectObject(hDC, font);           // Selects The Font We Want
 	wglUseFontBitmaps(hDC, 31, 96, font_base);				// Builds 96 Characters Starting At Character 32
@@ -449,8 +449,8 @@ GLvoid glPrint(const char *fmt, ...)	// Custom GL "Print" Routine
 	glPopAttrib();			// Pops The Display List Bits
 }
 
-
-void TworzListyWyswietlania()
+// Tworzenie list wyświetlania
+void CreateDisplayLists()
 {
 	glNewList(Wall1, GL_COMPILE);	// GL_COMPILE - lista jest kompilowana, ale nie wykonywana
 
@@ -566,7 +566,7 @@ void TworzListyWyswietlania()
 }
 
 
-void RysujGlobalnyUkladWsp(void)
+void DrawGlobalCoordinateSystem(void)
 {
 
 	glColor3f(1, 0, 0);
