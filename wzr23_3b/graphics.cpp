@@ -13,20 +13,20 @@ using namespace std;
 #include "graphics.h"
 #include "objects.h"
 
-ViewParams viewpar;
+ViewParams view_parameters;
 
-extern MovableObject *my_car;               // obiekt przypisany do tej aplikacji
-extern map<int, MovableObject*> other_cars;
+extern MovableObject *my_vehicle;               // obiekt przypisany do tej aplikacji
+extern map<int, MovableObject*> movable_objects;
 extern CRITICAL_SECTION m_cs;
 
-extern Environment env;
-extern long duration_of_day;
+extern Terrain terrain;
+extern long time_of_day;
 
 int g_GLPixelIndex = 0;
 HGLRC g_hGLContext = NULL;
 unsigned int font_base;
 extern long time_start;                 // czas od uruchomienia potrzebny np. do obliczenia po³o¿enia s³oñca
-extern HWND main_window;
+extern HWND window_handle;
 
 extern void CreateDisplayLists();		// definiujemy listy tworz¹ce labirynt
 extern void DrawGlobalCoordAxes();
@@ -47,44 +47,44 @@ int GraphicsInitialisation(HDC g_context)
 
 
 	CreateDisplayLists();		// definiujemy listy tworz¹ce ró¿ne elementy sceny
-	env.DrawInitialisation();
+	terrain.DrawInitialisation();
 
 	// pocz¹tkowe ustawienia widoku:
 	// Parametry widoku:
-	viewpar.cam_direct_1 = Vector3(10, -3, -14);   // kierunek patrzenia
-	viewpar.cam_pos_1 = Vector3(-35, 6, 10);         // po³o¿enie kamery
-	viewpar.cam_vertical_1 = Vector3(0, 1, 0);           // kierunek pionu kamery        
-	viewpar.cam_direct_2 = Vector3(0, -1, 0.02);   // to samo dla widoku z góry
-	viewpar.cam_pos_2 = Vector3(0, 100, 0);
-	viewpar.cam_vertical_2 = Vector3(0, 0, -1);
-	viewpar.cam_direct = viewpar.cam_direct_1;
-	viewpar.cam_pos = viewpar.cam_pos_1;
-	viewpar.cam_vertical = viewpar.cam_vertical_1;
-	viewpar.tracking = 0;                             // tryb œledzenia obiektu przez kamerê
-	viewpar.top_view = 0;                          // tryb widoku z góry
-	viewpar.cam_distance = 18.0;                          // cam_distance widoku z kamery
-	viewpar.cam_angle = 0;                            // obrót kamery góra-dó³
-	viewpar.cam_distance_1 = viewpar.cam_distance;
-	viewpar.cam_angle_1 = viewpar.cam_angle;
-	viewpar.cam_distance_2 = viewpar.cam_distance;
-	viewpar.cam_angle_2 = viewpar.cam_angle;
-	viewpar.cam_distance_3 = viewpar.cam_distance;
-	viewpar.cam_angle_3 = viewpar.cam_angle;
-	viewpar.zoom = 1.0;
+	view_parameters.cam_direct_1 = Vector3(10, -3, -14);   // kierunek patrzenia
+	view_parameters.cam_pos_1 = Vector3(-35, 6, 10);         // po³o¿enie kamery
+	view_parameters.cam_vertical_1 = Vector3(0, 1, 0);           // kierunek pionu kamery        
+	view_parameters.cam_direct_2 = Vector3(0, -1, 0.02);   // to samo dla widoku z góry
+	view_parameters.cam_pos_2 = Vector3(0, 100, 0);
+	view_parameters.cam_vertical_2 = Vector3(0, 0, -1);
+	view_parameters.cam_direct = view_parameters.cam_direct_1;
+	view_parameters.cam_pos = view_parameters.cam_pos_1;
+	view_parameters.cam_vertical = view_parameters.cam_vertical_1;
+	view_parameters.tracking = 0;                             // tryb œledzenia obiektu przez kamerê
+	view_parameters.top_view = 0;                          // tryb widoku z góry
+	view_parameters.cam_distance = 21.0;                          // cam_distance widoku z kamery
+	view_parameters.cam_angle = 0;                            // obrót kamery góra-dó³
+	view_parameters.cam_distance_1 = view_parameters.cam_distance;
+	view_parameters.cam_angle_1 = view_parameters.cam_angle;
+	view_parameters.cam_distance_2 = view_parameters.cam_distance;
+	view_parameters.cam_angle_2 = view_parameters.cam_angle;
+	view_parameters.cam_distance_3 = view_parameters.cam_distance;
+	view_parameters.cam_angle_3 = view_parameters.cam_angle;
+	view_parameters.zoom = 1.0;
 }
 
 
 void DrawScene()
 {
-	GLfloat BlueSurface[] = { 0.3f, 0.0f, 0.8f, 0.5f };
-	GLfloat DGreenSurface[] = { 0.2f, 0.8f, 0.25f, 0.7f };
-	GLfloat RedSurface[] = { 0.8f, 0.2f, 0.1f, 0.5f };
+	GLfloat OwnVehicleColor[] = { 0.4f, 0.0f, 0.8f, 0.5f };
+	GLfloat AlienVehiclesColor[] = { 0.6f, 0.6f, 0.25f, 0.7f };
+	GLfloat RedSurface[] = { 1.0f, 0.0f, 0.1f, 0.7f };
 	
 	GLfloat YellowSurface[] = { 0.75f, 0.75f, 0.0f, 1.0f };
 	
 
 	GLfloat LightAmbient[] = { 0.1f, 0.1f, 0.1f, 0.1f };
-	GLfloat LightDiffuse[] = { 0.2f, 0.7f, 0.7f, 0.7f };
+	GLfloat LightDiffuse[] = { 0.4f, 0.7f, 0.7f, 0.7f };
 	GLfloat LightPosition[] = { 5.0f, 5.0f, 5.0f, 0.0f };
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -96,61 +96,61 @@ void DrawScene()
 	glEnable(GL_LIGHT0);
 
 	glPushMatrix();
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, BlueSurface);
+	//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, BlueSurface);
 
 	
 
 	Vector3 direction_k, vertical_k, position_k;
-	if (viewpar.tracking)
+	if (view_parameters.tracking)
 	{
-		direction_k = my_car->state.qOrient.rotate_vector(Vector3(1, 0, 0));
-		vertical_k = my_car->state.qOrient.rotate_vector(Vector3(0, 1, 0));
-		Vector3 v_cam_right = my_car->state.qOrient.rotate_vector(Vector3(0, 0, 1));
+		direction_k = my_vehicle->state.qOrient.rotate_vector(Vector3(1, 0, 0));
+		vertical_k = my_vehicle->state.qOrient.rotate_vector(Vector3(0, 1, 0));
+		Vector3 v_cam_right = my_vehicle->state.qOrient.rotate_vector(Vector3(0, 0, 1));
 
-		vertical_k = vertical_k.rotation(viewpar.cam_angle, v_cam_right.x, v_cam_right.y, v_cam_right.z);
-		direction_k = direction_k.rotation(viewpar.cam_angle, v_cam_right.x, v_cam_right.y, v_cam_right.z);
-		position_k = my_car->state.vPos - direction_k*my_car->length * 0 +
-			vertical_k.znorm()*my_car->height * 5;
-		viewpar.cam_vertical = vertical_k;
-		viewpar.cam_direct = direction_k;
-		viewpar.cam_pos = position_k;
+		vertical_k = vertical_k.rotation(view_parameters.cam_angle, v_cam_right.x, v_cam_right.y, v_cam_right.z);
+		direction_k = direction_k.rotation(view_parameters.cam_angle, v_cam_right.x, v_cam_right.y, v_cam_right.z);
+		position_k = my_vehicle->state.vPos - direction_k*my_vehicle->length * 0 +
+			vertical_k.znorm()*my_vehicle->height * 5;
+		view_parameters.cam_vertical = vertical_k;
+		view_parameters.cam_direct = direction_k;
+		view_parameters.cam_pos = position_k;
 	}
 	else
 	{
-		vertical_k = viewpar.cam_vertical;
-		direction_k = viewpar.cam_direct;
-		position_k = viewpar.cam_pos;
+		vertical_k = view_parameters.cam_vertical;
+		direction_k = view_parameters.cam_direct;
+		position_k = view_parameters.cam_pos;
 		Vector3 v_cam_right = (direction_k*vertical_k).znorm();
-		vertical_k = vertical_k.rotation(viewpar.cam_angle / 20, v_cam_right.x, v_cam_right.y, v_cam_right.z);
-		direction_k = direction_k.rotation(viewpar.cam_angle / 20, v_cam_right.x, v_cam_right.y, v_cam_right.z);
+		vertical_k = vertical_k.rotation(view_parameters.cam_angle / 20, v_cam_right.x, v_cam_right.y, v_cam_right.z);
+		direction_k = direction_k.rotation(view_parameters.cam_angle / 20, v_cam_right.x, v_cam_right.y, v_cam_right.z);
 	}
 
 	// Ustawianie widoku sceny    
-	gluLookAt(position_k.x - viewpar.cam_distance*direction_k.x,
-		position_k.y - viewpar.cam_distance*direction_k.y, position_k.z - viewpar.cam_distance*direction_k.z,
+	gluLookAt(position_k.x - view_parameters.cam_distance*direction_k.x,
+		position_k.y - view_parameters.cam_distance*direction_k.y, position_k.z - view_parameters.cam_distance*direction_k.z,
 		position_k.x + direction_k.x, position_k.y + direction_k.y, position_k.z + direction_k.z,
 		vertical_k.x, vertical_k.y, vertical_k.z);
 
 	//glRasterPos2f(0.30,-0.27);
-	//glPrint("my_car->iID = %d",my_car->iID ); 
+	//glPrint("my_vehicle->iID = %d",my_vehicle->iID ); 
 
 	DrawGlobalCoordAxes();
 
 	// s³oñce + t³o:
-	int R = 50000;                // promieñ obiegu
-	long x = (clock() - time_start) % (duration_of_day*CLOCKS_PER_SEC);
-	float angle = (float)x / (duration_of_day*CLOCKS_PER_SEC) * 2 * 3.1416;
+	int R = 52000;                // promieñ obiegu
+	long x = (clock() - time_start) % (time_of_day*CLOCKS_PER_SEC);
+	float angle = (float)x / (time_of_day*CLOCKS_PER_SEC) * 2 * 3.1416;
 	//char lan[128];
 	//sprintf(lan,"angle = %f\n", angle);
-	//SetWindowText(main_window, lan);
+	//SetWindowText(window_handle, lan);
 
 	float cos_abs = fabs(cos(angle));
 	float cos_sq = cos_abs*cos_abs, sin_sq = sin(angle)*sin(angle);
 	float sin_angminpi = fabs(sin(angle/2 - 3.1416/2));                   // 0 gdy s³oñce na antypodach, 1 w po³udnie
 	float sin_angminpi_sqr = sin_angminpi*sin_angminpi;
 	float cos_ang_zachod = fabs(cos((angle - 1.5)*3));                    // 1 w momencie wschodu lub zachodu  
-	glClearColor(0.35*cos_abs*sin_angminpi_sqr + 0.15*sin_sq*cos_ang_zachod, 0.85*cos_abs*sin_angminpi_sqr, 2.0*cos_abs*sin_angminpi_sqr, 0.9);  // ustawienie t³a
-	GLfloat SunColor[] = { 8.0*cos_sq, 8.0 * cos_sq*cos_sq*sin_angminpi, 8.0 * cos_sq*cos_sq*sin_angminpi, 1.0f };
+	glClearColor(0.65*cos_abs*sin_angminpi_sqr + 0.25*sin_sq*cos_ang_zachod, 0.75*cos_abs*sin_angminpi_sqr, 4.0*cos_abs*sin_angminpi_sqr, 1.0);  // ustawienie t³a
+	GLfloat SunColor[] = { 8.0*cos_sq, 8.0 * cos_sq*cos_sq*sin_angminpi, 4.0 * cos_sq*cos_sq*sin_angminpi, 1.0f };
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, SunColor);
 	glPushMatrix();
 	glTranslatef(R*cos(angle), R*(cos(angle)*0.5 - 0.2), R*sin(angle));   // ustawienie s³oñca
@@ -160,7 +160,7 @@ void DrawScene()
 	gluDeleteQuadric(Qsph);
 	glPopMatrix();
 
-	GLfloat GroundSurface[] = { 0.5*(0.4 + 0.6*sin_angminpi), 0.5*(0.2 + 0.8*sin_angminpi), 0.3*(0.1 + 0.9*sin_angminpi), 1.0f };
+	GLfloat GroundSurface[] = { 0.5*(0.8 + 0.4*sin_angminpi), 0.5*(0.2 + 0.8*sin_angminpi), 0.3*(0.1 + 0.9*sin_angminpi), 1.0f };
 
 	//glPushMatrix();
 	for (int w = -1; w < 2; w++)
@@ -168,27 +168,31 @@ void DrawScene()
 		{
 			glPushMatrix();
 
-			glTranslatef(env.number_of_columns*env.field_size*k, 0, env.number_of_rows*env.field_size*w);
+			glTranslatef(terrain.number_of_columns*terrain.field_size*k, 0, terrain.number_of_rows*terrain.field_size*w);
 
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, BlueSurface);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, OwnVehicleColor);
 			glEnable(GL_BLEND);
 
-			my_car->DrawObject();
+			my_vehicle->DrawObject();
 
 			// Lock the Critical section
 			EnterCriticalSection(&m_cs);
-			for (map<int, MovableObject*>::iterator it = other_cars.begin(); it != other_cars.end(); ++it)
-			{
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, DGreenSurface);
-				it->second->DrawObject();
-			}
+			for (map<int, MovableObject*>::iterator it = movable_objects.begin(); it != movable_objects.end(); ++it)
+				if (it->second)
+				{
+					if (it->second->iID == my_vehicle->iID)
+						glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, RedSurface);
+					else
+						glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, AlienVehiclesColor);
+					it->second->DrawObject();
+				}
 			//Release the Critical section
 			LeaveCriticalSection(&m_cs);
 
 			glDisable(GL_BLEND);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, GroundSurface);
 
-			env.Draw();
+			terrain.Draw();
 			glPopMatrix();
 		}
 
@@ -216,7 +220,7 @@ void WindowResize(int cx, int cy)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(35 * viewpar.zoom, aspect, 1, 100000.0);
+	gluPerspective(35 * view_parameters.zoom, aspect, 1, 100000.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -319,7 +323,7 @@ GLvoid BuildFont(HDC hDC)								// Build Our Bitmap Font
 	font_base = glGenLists(96);								// Storage For 96 Characters
 
 	font = CreateFont(-14,							// Height Of Font
-		13,								// Width Of Font
+		0,								// Width Of Font
 		0,								// Angle Of Escapement
 		0,								// Orientation Angle
 		FW_NORMAL,						// Font Weight

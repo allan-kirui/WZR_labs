@@ -12,7 +12,7 @@ enum GLDisplayListNames
 	Floor = 3,
 	Cube = 4,
 	Auto = 5,
-	EnvironmentMap = 10
+	TerrainMap = 10
 
 };
 

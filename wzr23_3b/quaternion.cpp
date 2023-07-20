@@ -1,16 +1,15 @@
 /**************************************************************************************************
-	Obs³uga quaternionów
+	Quaternion support module
 
-	Aby zrealizowaæ obrót nale¿y pomno¿yæ quaternion orientacji przez kwaterion obrotu
-	z lewej strony:
+	To accomplish the rotation, multiply quaternion orientation by quaternion rotation
+	on the left side:
 
 	qOrient = qRot*qOrient
 
-	Uwaga! Zak³adam, ¿e quaterniony qRot i qOrient s¹ d³ugoœci 1, inaczej trzeba jeszcze je normalizowaæ
+	Attention! I assume that quaternion qRot and qOrient are length 1, otherwise you have to normalize them
 
-	Kwaternion mo¿e tez reprezentowaæ orientacjê obiektu, jeœli za³o¿ymy jak¹œ orientacjê
-	pocz¹tkow¹ np. obiekt skierowany w kierunku osi 0x, z normaln¹ zgodn¹ z 0y. Wówczas
-	quaternion odpowiada obrotowi od po³o¿enia poc¿¹tkowego.
+	A quaternion may also represent the orientation (angular position) of the object if we assume an orientation is a rotation 
+	from a base orientation (e.g. a floor of a vehicle is parallel to xz surface and a longitudinal axis of the vehicle coincides with the x axis) 
 	****************************************************************************************************/
 #include <stdlib.h>
 #include "quaternion.h"
@@ -19,7 +18,6 @@
 quaternion::quaternion(float x, float y, float z, float w)
 
 {
-
 	this->x = x;
 	this->y = y;
 	this->z = z;
